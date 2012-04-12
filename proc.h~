@@ -67,7 +67,10 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
-//  int quantum; // Quantum lleva la cantidad de tics corriendo 
+  int quantum; 				   // Quantum lleva la cantidad de ticks corriendo
+  struct proc *next;           // Apunta al siguiente proceso del mismo nivel. 
+  struct proc *last; 			 // Apunta al anterior proceso del mismo nivel. 
+  int current_level;           // Indica el nivel corriente del proceso.
 };
 
 // Process memory is laid out contiguously, low addresses first:
