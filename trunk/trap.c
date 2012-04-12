@@ -104,8 +104,8 @@ trap(struct trapframe *tf)
   // If interrupts were on while locks held, would need to check nlock.
   if(proc && proc->state == RUNNING && tf->trapno == T_IRQ0+IRQ_TIMER) {//ANOTAAARRRR
 	  proc->quantum+=1;
-	  cprintf("El Proceso '%s', lleva el QUANTUM  %d    \n",proc->name,proc->quantum);
-	  if(proc->quantum == Quantum)
+	  //cprintf("El Proceso '%s', lleva el QUANTUM  %d    \n",proc->name,proc->quantum);  Este print muestra el nombre del proceso y cual es su quantum
+	  if(proc->quantum == MAX_QUANTUM)
     	yield();
 	}
 

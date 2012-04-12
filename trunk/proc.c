@@ -25,24 +25,51 @@ extern void trapret(void);
 
 static void wakeup1(void *chan);
 
+static void
+encolar(struct proc *p,int level)
+{
+  if( ptable.mlf[level].first == 0)
+  {
+    ptable.mlf[level].last = p;   
+    ptable.mlf[level].first = p;  
+	p->current_level = level;
+  	cprintf("Primer elemento en ptable.proc del nivel %d   \n",level);
+  }
+  else
+  {
+    ptable.mlf[level].last->next = p; 
+    ptable.mlf[level].last = p;   
+	p->current_level = level;
+    cprintf("Encole un proceso en ptable.proc de nivel %d   \n",level);
+  }
+}
+
+static void
+desencolar(struct proc *p)
+{
+  if(ptable.mlf[p->current_level].last == ptable.mlf[p->current_level].first)
+  {
+    ptable.mlf[p->current_level].last = 0;
+    ptable.mlf[p->current_level].first = 0;
+  }
+  struct proc *indice;
+  for(indice =ptable.mlf[p->current_level].first ; indice++->pid != p->pid ; indice++);
+  indice->next = p->next;
+}
 
 static void 
 make_runnable(struct proc *p,int level)
 {
-  if (level==0)
-  {
-    ptable.mlf[0].first = p;  
-  }
+  encolar(p,level);
   p->state= RUNNABLE;
 }
 
 static void 
 make_running(struct proc *p)
 {
-  //desencolamos el proceso
+  desencolar(p);
   p->state= RUNNING;
 }
-
 
 void
 pinit(void)

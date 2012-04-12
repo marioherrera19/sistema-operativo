@@ -7,9 +7,14 @@
 #include "proc.h"
 #include "spinlock.h"
 
+struct queue{
+  struct proc *first, *last;
+};
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
+  struct queue mlf[MLF_LEVELS];
 } ptable;
 
 static struct proc *initproc;
@@ -19,6 +24,53 @@ extern void forkret(void);
 extern void trapret(void);
 
 static void wakeup1(void *chan);
+
+static void
+encolar(struct proc *p,int level)
+{
+  if( ptable.mlf[level].first == 0)
+  {
+    ptable.mlf[level].last = p;   
+    ptable.mlf[level].first = p;  
+	p->current_level = level;
+  	cprintf("Primer elemento en ptable.proc del nivel %d   \n",level);
+  }
+  else
+  {
+    ptable.mlf[level].last->next = p; 
+    ptable.mlf[level].last = p;   
+	p->current_level = level;
+    cprintf("Encole un proceso en ptable.proc de nivel %d   \n",level);
+  }
+}
+
+static void
+desencolar(struct proc *p)
+{
+  if(ptable.mlf[p->current_level].last == ptable.mlf[p->current_level].first)
+  {
+    ptable.mlf[p->current_level].last = 0;
+    ptable.mlf[p->current_level].first = 0;
+  }
+
+  struct proc *indice;
+  for(indice =ptable.mlf[p->current_level].first ; indice++->pid != p->pid ; indice++);
+  indice->next = p->next;
+}
+
+static void 
+make_runnable(struct proc *p,int level)
+{
+  encolar(p,level);
+  p->state= RUNNABLE;
+}
+
+static void 
+make_running(struct proc *p)
+{
+  desencolar(p);
+  p->state= RUNNING;
+}
 
 void
 pinit(void)
@@ -99,7 +151,8 @@ userinit(void)
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
 
-  p->state = RUNNABLE;
+  make_runnable(p,0);
+  //p->state = RUNNABLE;
 }
 
 // Grow current process's memory by n bytes.
@@ -155,7 +208,8 @@ fork(void)
   np->cwd = idup(proc->cwd);
  
   pid = np->pid;
-  np->state = RUNNABLE;
+  make_runnable(np,0);
+  //np->state = RUNNABLE;
   safestrcpy(np->name, proc->name, sizeof(proc->name));
   return pid;
 }
@@ -274,12 +328,12 @@ scheduler(void)
       // before jumping back to us.
       proc = p;
       switchuvm(p);
-      p->state = RUNNING;
+      make_running(p);
+      //p->state = RUNNING;
 	  p->quantum = 0;
       swtch(&cpu->scheduler, proc->context);
       switchkvm();
-
-	// cprintf("%s  JOSE \n",p->quantum);
+	  // cprintf("%s  JOSE \n",p->quantum);
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       proc = 0;
@@ -314,7 +368,8 @@ void
 yield(void)
 {
   acquire(&ptable.lock);  //DOC: yieldlock
-  proc->state = RUNNABLE;
+  make_runnable(proc,1);//baja de nivel en la cola
+  //proc->state = RUNNABLE;
   sched();
   release(&ptable.lock);
 }
@@ -386,7 +441,8 @@ wakeup1(void *chan)
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if(p->state == SLEEPING && p->chan == chan)
-      p->state = RUNNABLE;
+      make_runnable(p,2);//Sube de nivel
+      //p->state = RUNNABLE;
 }
 
 // Wake up all processes sleeping on chan.
@@ -412,7 +468,8 @@ kill(int pid)
       p->killed = 1;
       // Wake process from sleep if necessary.
       if(p->state == SLEEPING)
-        p->state = RUNNABLE;
+        make_runnable(p,3);//Queda el nivel q estaba
+        //p->state = RUNNABLE;
       release(&ptable.lock);
       return 0;
     }
