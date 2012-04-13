@@ -9,6 +9,6 @@
 #define ROOTDEV       1  // device number of file system root disk
 #define MAXARG       32  // max exec arguments
 #define LOGSIZE      10  // max data sectors in on-disk log
-#define MAX_QUANTUM      5  // Cantidad de ticks que usa un proceso la cpu
+#define MAX_QUANTUM      4  // Cantidad de ticks que usa un proceso la cpu
 #define MLF_LEVELS    4  // Niveles de la cola mlf
 

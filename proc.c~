@@ -25,6 +25,23 @@ extern void trapret(void);
 
 static void wakeup1(void *chan);
 
+
+int
+up(struct proc *p)
+{
+  int aux = ((p->current_level >0) ? p->current_level-1 : p->current_level);
+  cprintf("UP al proceso '%s' al level %d \n",p->name,aux);
+  return aux;
+}
+
+int
+down(struct proc *p)
+{
+  int aux = ((p->current_level < 3)?p->current_level+1 : p->current_level);
+  cprintf("DOWN al proceso '%s' al level %d \n",p->name,aux);
+  return aux;
+}
+
 static void
 encolar(struct proc *p,int level)
 {
@@ -33,29 +50,31 @@ encolar(struct proc *p,int level)
     ptable.mlf[level].last = p;   
     ptable.mlf[level].first = p;  
 	p->current_level = level;
-  	cprintf("Primer elemento en ptable.proc del nivel %d   \n",level);
+//    cprintf("Primer elemento en ptable.proc del nivel %d   \n",level);
   }
   else
   {
     ptable.mlf[level].last->next = p; 
     ptable.mlf[level].last = p;   
 	p->current_level = level;
-    cprintf("Encole un proceso en ptable.proc de nivel %d   \n",level);
+//    cprintf("Encole un proceso en ptable.proc de nivel %d   \n",level);
   }
 }
 
 static void
 desencolar(struct proc *p)
 {
-  if(ptable.mlf[p->current_level].last == ptable.mlf[p->current_level].first)
+  if(ptable.mlf[p->current_level].last->pid ==ptable.mlf[p->current_level].first->pid)
   {
     ptable.mlf[p->current_level].last = 0;
     ptable.mlf[p->current_level].first = 0;
+//    cprintf("Desencole el proceso de ptable.proc %s   \n",p->name);
   }
-
-  struct proc *indice;
-  for(indice =ptable.mlf[p->current_level].first ; indice++->pid != p->pid ; indice++);
-  indice->next = p->next;
+  else
+  {
+    ptable.mlf[p->current_level].first = p->next;
+//    cprintf("Desencole el proceso de ptable.proc %s   \n",p->name);
+  }
 }
 
 static void 
@@ -329,6 +348,7 @@ scheduler(void)
       proc = p;
       switchuvm(p);
       make_running(p);
+//      cprintf("El proceso %s pasa a RUNNING por SHEDULE \n",p->name);
       //p->state = RUNNING;
 	  p->quantum = 0;
       swtch(&cpu->scheduler, proc->context);
@@ -368,7 +388,8 @@ void
 yield(void)
 {
   acquire(&ptable.lock);  //DOC: yieldlock
-  make_runnable(proc,1);//baja de nivel en la cola
+ // cprintf("El proceso %s pasa a RUNNABLE por YIELD \n",proc->name);
+  make_runnable(proc,down(proc));//baja de nivel en la cola
   //proc->state = RUNNABLE;
   sched();
   release(&ptable.lock);
@@ -441,7 +462,10 @@ wakeup1(void *chan)
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if(p->state == SLEEPING && p->chan == chan)
-      make_runnable(p,2);//Sube de nivel
+    {
+//      cprintf("El proceso %s pasa a RUNNABLE por WAKEUP \n",p->name);
+      make_runnable(p,up(p));//Sube de nivel
+    }
       //p->state = RUNNABLE;
 }
 
@@ -468,8 +492,11 @@ kill(int pid)
       p->killed = 1;
       // Wake process from sleep if necessary.
       if(p->state == SLEEPING)
-        make_runnable(p,3);//Queda el nivel q estaba
+      {
+        cprintf("El proceso %s pasa a RUNNABLE por KILL \n",p->name);
+        make_runnable(p,p->current_level);//Queda el nivel q estaba
         //p->state = RUNNABLE;
+      }
       release(&ptable.lock);
       return 0;
     }
