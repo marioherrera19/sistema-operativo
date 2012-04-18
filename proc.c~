@@ -37,7 +37,7 @@ up(struct proc *p)
 int
 down(struct proc *p)
 {
-  int aux = ((p->current_level < 3)?p->current_level+1 : p->current_level);
+  int aux = ((p->current_level < MLF_LEVELS-1)?p->current_level+1 : p->current_level);
   cprintf("DOWN al proceso '%s' al level %d \n",p->name,aux);
   return aux;
 }
@@ -338,28 +338,32 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
-
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      proc = p;
-      switchuvm(p);
-      make_running(p);
-//      cprintf("El proceso %s pasa a RUNNING por SHEDULE \n",p->name);
-      //p->state = RUNNING;
-	  p->quantum = 0;
-      swtch(&cpu->scheduler, proc->context);
-      switchkvm();
-	  // cprintf("%s  JOSE \n",p->quantum);
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      proc = 0;
+  int indice;
+  for(indice = 0 ; indice == MLF_LEVELS -1; indice++){
+    if(ptable.mlf[indice].first != 0)
+    {
+    	for(p = ptable.mlf[indice].first; p != 0; p++){
+	      if(p->state != RUNNABLE)
+    	    continue;
+		   // Switch to chosen process.  It is the process's job
+		  // to release ptable.lock and then reacquire it
+		  // before jumping back to us.
+		  proc = p;
+		  switchuvm(p);
+		  make_running(p);
+//        cprintf("El proceso %s pasa a RUNNING por SHEDULE \n",p->name);
+//		  p->state = RUNNING;
+		  p->quantum = 0;
+	      swtch(&cpu->scheduler, proc->context);
+	      switchkvm();
+		  // cprintf("%s  JOSE \n",p->quantum);
+	      // Process is done running for now.
+	      // It should have changed its p->state before coming back.
+ 	     proc = 0;
     }
     release(&ptable.lock);
-
+    }
+    }
   }
 }
 
