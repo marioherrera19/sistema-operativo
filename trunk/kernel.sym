@@ -104,8 +104,8 @@
 801041dd make_running
 80104216 allocproc
 80104b25 wakeup1
-8010b020 first.1429
-8010b008 states.1454
+8010b020 first.1425
+8010b008 states.1450
 00000000 spinlock.c
 80104d3c readeflags
 80104d51 cli
