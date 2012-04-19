@@ -8489,113 +8489,103 @@ scheduler(void)
 80104887:	89 e5                	mov    %esp,%ebp
 80104889:	83 ec 28             	sub    $0x28,%esp
   struct proc *p;
-
-  for(;;){
-    // Enable interrupts on this processor.
-    sti();
-8010488c:	e8 74 f7 ff ff       	call   80104005 <sti>
-
-    // Loop over process table looking for process to run.
-    acquire(&ptable.lock);
-80104891:	c7 04 24 20 ff 10 80 	movl   $0x8010ff20,(%esp)
-80104898:	e8 06 05 00 00       	call   80104da3 <acquire>
   int indice;
-  for(indice = 0 ; indice == MLF_LEVELS -1; indice++){
-8010489d:	c7 45 f0 00 00 00 00 	movl   $0x0,-0x10(%ebp)
-801048a4:	e9 ae 00 00 00       	jmp    80104957 <scheduler+0xd1>
-    if(ptable.mlf[indice].first != 0)
-801048a9:	8b 45 f0             	mov    -0x10(%ebp),%eax
+  for(;;){
+	  indice = 0;  
+8010488c:	c7 45 f4 00 00 00 00 	movl   $0x0,-0xc(%ebp)
+      // Enable interrupts on this processor.
+      sti();
+80104893:	e8 6d f7 ff ff       	call   80104005 <sti>
+     // Loop over process table looking for process to run.
+      acquire(&ptable.lock);
+80104898:	c7 04 24 20 ff 10 80 	movl   $0x8010ff20,(%esp)
+8010489f:	e8 ff 04 00 00       	call   80104da3 <acquire>
+      while(indice < MLF_LEVELS)    //  Con esto recorro los niveles de MLF
+801048a4:	e9 a2 00 00 00       	jmp    8010494b <scheduler+0xc5>
+      {
+      if(ptable.mlf[indice].first != 0)
+801048a9:	8b 45 f4             	mov    -0xc(%ebp),%eax
 801048ac:	05 46 04 00 00       	add    $0x446,%eax
 801048b1:	8b 04 c5 24 ff 10 80 	mov    -0x7fef00dc(,%eax,8),%eax
 801048b8:	85 c0                	test   %eax,%eax
-801048ba:	0f 84 93 00 00 00    	je     80104953 <scheduler+0xcd>
-    {
-    	for(p = ptable.mlf[indice].first; p != 0; p++){
-801048c0:	8b 45 f0             	mov    -0x10(%ebp),%eax
-801048c3:	05 46 04 00 00       	add    $0x446,%eax
-801048c8:	8b 04 c5 24 ff 10 80 	mov    -0x7fef00dc(,%eax,8),%eax
-801048cf:	89 45 f4             	mov    %eax,-0xc(%ebp)
-801048d2:	eb 6d                	jmp    80104941 <scheduler+0xbb>
-	      if(p->state != RUNNABLE)
-801048d4:	8b 45 f4             	mov    -0xc(%ebp),%eax
-801048d7:	8b 40 0c             	mov    0xc(%eax),%eax
-801048da:	83 f8 03             	cmp    $0x3,%eax
-801048dd:	75 5a                	jne    80104939 <scheduler+0xb3>
-    	    continue;
+801048ba:	74 75                	je     80104931 <scheduler+0xab>
+	   {
+			  p = ptable.mlf[indice].first;	
+801048bc:	8b 45 f4             	mov    -0xc(%ebp),%eax
+801048bf:	05 46 04 00 00       	add    $0x446,%eax
+801048c4:	8b 04 c5 24 ff 10 80 	mov    -0x7fef00dc(,%eax,8),%eax
+801048cb:	89 45 f0             	mov    %eax,-0x10(%ebp)
+			  if(p->state != RUNNABLE)
+801048ce:	8b 45 f0             	mov    -0x10(%ebp),%eax
+801048d1:	8b 40 0c             	mov    0xc(%eax),%eax
+801048d4:	83 f8 03             	cmp    $0x3,%eax
+801048d7:	75 71                	jne    8010494a <scheduler+0xc4>
+			    continue;
 			   // Switch to chosen process.  It is the process's job
 			  // to release ptable.lock and then reacquire it
 			  // before jumping back to us.
-		  proc = p;
-801048df:	8b 45 f4             	mov    -0xc(%ebp),%eax
-801048e2:	65 a3 04 00 00 00    	mov    %eax,%gs:0x4
-		  switchuvm(p);
-801048e8:	8b 45 f4             	mov    -0xc(%ebp),%eax
-801048eb:	89 04 24             	mov    %eax,(%esp)
-801048ee:	e8 83 33 00 00       	call   80107c76 <switchuvm>
-		  make_running(p);
-801048f3:	8b 45 f4             	mov    -0xc(%ebp),%eax
-801048f6:	89 04 24             	mov    %eax,(%esp)
-801048f9:	e8 df f8 ff ff       	call   801041dd <make_running>
-//        cprintf("El proceso %s pasa a RUNNING por SHEDULE \n",p->name);
-          //p->state = RUNNING;
-		  p->quantum = 0;
-801048fe:	8b 45 f4             	mov    -0xc(%ebp),%eax
-80104901:	c7 40 7c 00 00 00 00 	movl   $0x0,0x7c(%eax)
-	      swtch(&cpu->scheduler, proc->context);
-80104908:	65 a1 04 00 00 00    	mov    %gs:0x4,%eax
-8010490e:	8b 40 1c             	mov    0x1c(%eax),%eax
-80104911:	65 8b 15 00 00 00 00 	mov    %gs:0x0,%edx
-80104918:	83 c2 04             	add    $0x4,%edx
-8010491b:	89 44 24 04          	mov    %eax,0x4(%esp)
-8010491f:	89 14 24             	mov    %edx,(%esp)
-80104922:	e8 75 09 00 00       	call   8010529c <swtch>
-	      switchkvm();
-80104927:	e8 2d 33 00 00       	call   80107c59 <switchkvm>
-		  // cprintf("%s  JOSE \n",p->quantum);
-	      // Process is done running for now.
-	      // It should have changed its p->state before coming back.
- 	     proc = 0;
-8010492c:	65 c7 05 04 00 00 00 	movl   $0x0,%gs:0x4
-80104933:	00 00 00 00 
-80104937:	eb 01                	jmp    8010493a <scheduler+0xb4>
-  for(indice = 0 ; indice == MLF_LEVELS -1; indice++){
-    if(ptable.mlf[indice].first != 0)
-    {
-    	for(p = ptable.mlf[indice].first; p != 0; p++){
-	      if(p->state != RUNNABLE)
-    	    continue;
-80104939:	90                   	nop
-    acquire(&ptable.lock);
-  int indice;
-  for(indice = 0 ; indice == MLF_LEVELS -1; indice++){
-    if(ptable.mlf[indice].first != 0)
-    {
-    	for(p = ptable.mlf[indice].first; p != 0; p++){
-8010493a:	81 45 f4 88 00 00 00 	addl   $0x88,-0xc(%ebp)
-80104941:	83 7d f4 00          	cmpl   $0x0,-0xc(%ebp)
-80104945:	75 8d                	jne    801048d4 <scheduler+0x4e>
-		  // cprintf("%s  JOSE \n",p->quantum);
-	      // Process is done running for now.
-	      // It should have changed its p->state before coming back.
- 	     proc = 0;
-    }
-    release(&ptable.lock);
-80104947:	c7 04 24 20 ff 10 80 	movl   $0x8010ff20,(%esp)
-8010494e:	e8 b2 04 00 00       	call   80104e05 <release>
-    sti();
-
-    // Loop over process table looking for process to run.
-    acquire(&ptable.lock);
-  int indice;
-  for(indice = 0 ; indice == MLF_LEVELS -1; indice++){
-80104953:	83 45 f0 01          	addl   $0x1,-0x10(%ebp)
-80104957:	83 7d f0 03          	cmpl   $0x3,-0x10(%ebp)
-8010495b:	0f 84 48 ff ff ff    	je     801048a9 <scheduler+0x23>
- 	     proc = 0;
-    }
-    release(&ptable.lock);
-    }
-    }
+			  proc = p;
+801048d9:	8b 45 f0             	mov    -0x10(%ebp),%eax
+801048dc:	65 a3 04 00 00 00    	mov    %eax,%gs:0x4
+			  switchuvm(p);
+801048e2:	8b 45 f0             	mov    -0x10(%ebp),%eax
+801048e5:	89 04 24             	mov    %eax,(%esp)
+801048e8:	e8 89 33 00 00       	call   80107c76 <switchuvm>
+			  make_running(p);   // No hago mas el FOR del xv6 original por que esta funcion ya me esta avanzando cosumiendo el first
+801048ed:	8b 45 f0             	mov    -0x10(%ebp),%eax
+801048f0:	89 04 24             	mov    %eax,(%esp)
+801048f3:	e8 e5 f8 ff ff       	call   801041dd <make_running>
+			  p->quantum = 0;
+801048f8:	8b 45 f0             	mov    -0x10(%ebp),%eax
+801048fb:	c7 40 7c 00 00 00 00 	movl   $0x0,0x7c(%eax)
+			  swtch(&cpu->scheduler, proc->context);
+80104902:	65 a1 04 00 00 00    	mov    %gs:0x4,%eax
+80104908:	8b 40 1c             	mov    0x1c(%eax),%eax
+8010490b:	65 8b 15 00 00 00 00 	mov    %gs:0x0,%edx
+80104912:	83 c2 04             	add    $0x4,%edx
+80104915:	89 44 24 04          	mov    %eax,0x4(%esp)
+80104919:	89 14 24             	mov    %edx,(%esp)
+8010491c:	e8 7b 09 00 00       	call   8010529c <swtch>
+			  switchkvm();
+80104921:	e8 33 33 00 00       	call   80107c59 <switchkvm>
+			  // Process is done running for now.
+			  // It should have changed its p->state before coming back.
+	 	     proc = 0;
+80104926:	65 c7 05 04 00 00 00 	movl   $0x0,%gs:0x4
+8010492d:	00 00 00 00 
+		}
+        if(ptable.mlf[indice].first == 0	)  // Me aseguro que recorro todos los proceso de un nivel antes de avanzar 
+80104931:	8b 45 f4             	mov    -0xc(%ebp),%eax
+80104934:	05 46 04 00 00       	add    $0x446,%eax
+80104939:	8b 04 c5 24 ff 10 80 	mov    -0x7fef00dc(,%eax,8),%eax
+80104940:	85 c0                	test   %eax,%eax
+80104942:	75 07                	jne    8010494b <scheduler+0xc5>
+        	indice++;
+80104944:	83 45 f4 01          	addl   $0x1,-0xc(%ebp)
+80104948:	eb 01                	jmp    8010494b <scheduler+0xc5>
+      {
+      if(ptable.mlf[indice].first != 0)
+	   {
+			  p = ptable.mlf[indice].first;	
+			  if(p->state != RUNNABLE)
+			    continue;
+8010494a:	90                   	nop
+	  indice = 0;  
+      // Enable interrupts on this processor.
+      sti();
+     // Loop over process table looking for process to run.
+      acquire(&ptable.lock);
+      while(indice < MLF_LEVELS)    //  Con esto recorro los niveles de MLF
+8010494b:	83 7d f4 03          	cmpl   $0x3,-0xc(%ebp)
+8010494f:	0f 8e 54 ff ff ff    	jle    801048a9 <scheduler+0x23>
+	 	     proc = 0;
+		}
+        if(ptable.mlf[indice].first == 0	)  // Me aseguro que recorro todos los proceso de un nivel antes de avanzar 
+        	indice++;
+	   }
+	release(&ptable.lock);
+80104955:	c7 04 24 20 ff 10 80 	movl   $0x8010ff20,(%esp)
+8010495c:	e8 a4 04 00 00       	call   80104e05 <release>
   }
 80104961:	e9 26 ff ff ff       	jmp    8010488c <scheduler+0x6>
 

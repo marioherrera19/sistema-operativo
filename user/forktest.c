@@ -33,22 +33,18 @@ forktest(void)
   }
 
 //NUEVO FOR PARA QUE SALTE EL QUANTUM
-/*
-  for(n=0; n<500000; n++){
+  for(n=0; n<50000; n++){
     pid = fork();
     if(pid < 0)
       break;
     if(pid == 0)
       exit();
 	else{
-		if(n==5)
+		if(n==2)
 			procstat();
 	}
   }
-*/
-
-
-  
+ 
   if(n == N){
     printf(1, "fork claimed to work N times!\n", N);
     exit();

@@ -331,39 +331,37 @@ void
 scheduler(void)
 {
   struct proc *p;
-
-  for(;;){
-    // Enable interrupts on this processor.
-    sti();
-
-    // Loop over process table looking for process to run.
-    acquire(&ptable.lock);
   int indice;
-  for(indice = 0 ; indice == MLF_LEVELS -1; indice++){
-    if(ptable.mlf[indice].first != 0)
-    {
-    	for(p = ptable.mlf[indice].first; p != 0; p++){
-	      if(p->state != RUNNABLE)
-    	    continue;
-		   // Switch to chosen process.  It is the process's job
-		  // to release ptable.lock and then reacquire it
-		  // before jumping back to us.
-		  proc = p;
-		  switchuvm(p);
-		  make_running(p);
-//        cprintf("El proceso %s pasa a RUNNING por SHEDULE \n",p->name);
-//		  p->state = RUNNING;
-		  p->quantum = 0;
-	      swtch(&cpu->scheduler, proc->context);
-	      switchkvm();
-		  // cprintf("%s  JOSE \n",p->quantum);
-	      // Process is done running for now.
-	      // It should have changed its p->state before coming back.
- 	     proc = 0;
-    }
-    release(&ptable.lock);
-    }
-    }
+  for(;;){
+	  indice = 0;  
+      // Enable interrupts on this processor.
+      sti();
+     // Loop over process table looking for process to run.
+      acquire(&ptable.lock);
+      while(indice < MLF_LEVELS)    //  Con esto recorro los niveles de MLF
+      {
+      if(ptable.mlf[indice].first != 0)
+	   {
+			  p = ptable.mlf[indice].first;	
+			  if(p->state != RUNNABLE)
+			    continue;
+			   // Switch to chosen process.  It is the process's job
+			  // to release ptable.lock and then reacquire it
+			  // before jumping back to us.
+			  proc = p;
+			  switchuvm(p);
+			  make_running(p);
+			  p->quantum = 0;
+			  swtch(&cpu->scheduler, proc->context);
+			  switchkvm();
+			  // Process is done running for now.
+			  // It should have changed its p->state before coming back.
+	 	     proc = 0;
+		}
+        if(ptable.mlf[indice].first == 0	)  // Me aseguro que recorro todos los proceso de un nivel antes de avanzar 
+        	indice++;
+	   }
+	release(&ptable.lock);
   }
 }
 
