@@ -82,7 +82,6 @@ int
 sys_uptime(void)
 {
   uint xticks;
-  
   acquire(&tickslock);
   xticks = ticks;
   release(&tickslock);
@@ -95,4 +94,16 @@ sys_procstat(void)
 	procdump();
 	return(0);
 }
+
+int 
+sys_set_priority(void)
+{
+	int p;
+	// argstr o algo asi para recuperar String
+	if(argint(0,&p) < 0)
+		return(-1);	
+	cprintf("El parametro de set priority es:    %d     # \n",p);
+	return (0);
+}
+
 

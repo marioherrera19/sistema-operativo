@@ -30,7 +30,7 @@ int
 up(struct proc *p)
 {
   int aux = ((p->current_level >0) ? p->current_level-1 : p->current_level);
-  cprintf("UP al proceso '%s' al level %d \n",p->name,aux);
+//  cprintf("UP al proceso '%s' al level %d \n",p->name,aux);
   return aux;
 }
 
@@ -38,7 +38,7 @@ int
 down(struct proc *p)
 {
   int aux = ((p->current_level < MLF_LEVELS-1)?p->current_level+1 : p->current_level);
-  cprintf("DOWN al proceso '%s' al level %d \n",p->name,aux);
+//  cprintf("DOWN al proceso '%s' al level %d \n",p->name,aux);
   return aux;
 }
 
@@ -330,6 +330,7 @@ wait(void)
 void
 scheduler(void)
 {
+ 
   struct proc *p;
   int indice;
   for(;;){
@@ -340,17 +341,29 @@ scheduler(void)
       acquire(&ptable.lock);
       while(indice < MLF_LEVELS)    //  Con esto recorro los niveles de MLF
       {
+
       if(ptable.mlf[indice].first != 0)
 	   {
 			  p = ptable.mlf[indice].first;	
+              cprintf("edi  %d  \n",p->context->edi);
+              cprintf("esi  %d  \n",p->context->esi);
+              cprintf("ebx  %d  \n",p->context->ebx);
+              cprintf("ebp  %d  \n",p->context->ebp);
+              cprintf("eip  %d  \n",p->context->eip);
+              cprintf("kstack  %s  \n",p->kstack);
+              cprintf("   \n");
+              
+
+                            
+                            
 			  if(p->state != RUNNABLE)
-			    continue;
+				panic("This proces is not RUNNABLE");
 			   // Switch to chosen process.  It is the process's job
 			  // to release ptable.lock and then reacquire it
 			  // before jumping back to us.
 			  proc = p;
 			  switchuvm(p);
-			  make_running(p);   // No hago mas el FOR del xv6 original por que esta funcion ya me esta avanzando cosumiendo el first
+    		  make_running(p);   // No hago mas el FOR del xv6 original por que esta funcion ya me esta avanzando cosumiendo el first
 			  p->quantum = 0;
 			  swtch(&cpu->scheduler, proc->context);
 			  switchkvm();
@@ -364,6 +377,8 @@ scheduler(void)
 	release(&ptable.lock);
   }
 }
+
+
 
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state.
