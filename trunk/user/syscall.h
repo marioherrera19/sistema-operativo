@@ -13,12 +13,14 @@
 #define SYS_sbrk   12
 #define SYS_sleep  13
 #define SYS_uptime 14
+#define SYS_procstat  15
+#define SYS_set_priority 16
 
-#define SYS_open   15
-#define SYS_write  16
-#define SYS_mknod  17
-#define SYS_unlink 18
-#define SYS_link   19
-#define SYS_mkdir  20
-#define SYS_close  21
-#define SYS_procstat  22
+#define SYS_open   17
+#define SYS_write  18
+#define SYS_mknod  19
+#define SYS_unlink 20
+#define SYS_link   21
+#define SYS_mkdir  22
+#define SYS_close  23
+

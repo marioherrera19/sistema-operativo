@@ -106,7 +106,10 @@ trap(struct trapframe *tf)
 	  proc->quantum+=1;
 	  //cprintf("El Proceso '%s', lleva el QUANTUM  %d    \n",proc->name,proc->quantum);  Este print muestra el nombre del proceso y cual es su quantum
 	  if(proc->quantum == MAX_QUANTUM) //Controla el limite de tiempo de uso del CPU agotado
+      {
+   //    cprintf("El Proceso '%s', lleva el QUANTUM  %d    \n",proc->name,proc->quantum);
        yield();
+       }
 	}
 
   // Check if the process has been killed since we yielded
