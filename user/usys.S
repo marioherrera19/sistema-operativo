@@ -29,5 +29,9 @@ SYSCALL(getpid)
 SYSCALL(sbrk)
 SYSCALL(sleep)
 SYSCALL(uptime)
+
+# Modificado declaramos una nueva llamada al sistema
 SYSCALL(procstat)
+
+# Modificado declaramos una nueva llamada al sistema
 SYSCALL(set_priority)

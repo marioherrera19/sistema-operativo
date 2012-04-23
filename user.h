@@ -22,6 +22,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+//Modificado Insertamos una nueva llamada al sistema
 int procstat(void);
 
 // ulib.c

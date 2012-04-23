@@ -22,7 +22,11 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+
+// Modificado declaramos una nueva llamada al sistema
 int procstat(void);
+
+// Modificado declaramos una nueva llamada al sistema
 int set_priority(int);
 
 // ulib.c

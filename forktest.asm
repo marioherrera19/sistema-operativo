@@ -79,11 +79,11 @@ forktest(void)
     if(pid < 0)
       break;
   7f:	90                   	nop
+		if(n==5)
 			procstat();
 	}
   }
-
-
+  
   if(n == N){
   80:	81 7d f4 e8 03 00 00 	cmpl   $0x3e8,-0xc(%ebp)
   87:	75 47                	jne    d0 <forktest+0xa7>
@@ -699,12 +699,16 @@ SYSCALL(uptime)
  423:	c3                   	ret    
 
 00000424 <procstat>:
+
+# Modificado declaramos una nueva llamada al sistema
 SYSCALL(procstat)
  424:	b8 0f 00 00 00       	mov    $0xf,%eax
  429:	cd 40                	int    $0x40
  42b:	c3                   	ret    
 
 0000042c <set_priority>:
+
+# Modificado declaramos una nueva llamada al sistema
 SYSCALL(set_priority)
  42c:	b8 10 00 00 00       	mov    $0x10,%eax
  431:	cd 40                	int    $0x40

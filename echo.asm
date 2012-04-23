@@ -590,12 +590,16 @@ SYSCALL(uptime)
  36b:	c3                   	ret    
 
 0000036c <procstat>:
+
+# Modificado declaramos una nueva llamada al sistema
 SYSCALL(procstat)
  36c:	b8 0f 00 00 00       	mov    $0xf,%eax
  371:	cd 40                	int    $0x40
  373:	c3                   	ret    
 
 00000374 <set_priority>:
+
+# Modificado declaramos una nueva llamada al sistema
 SYSCALL(set_priority)
  374:	b8 10 00 00 00       	mov    $0x10,%eax
  379:	cd 40                	int    $0x40

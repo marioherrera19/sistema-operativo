@@ -7,14 +7,19 @@
 #include "proc.h"
 #include "spinlock.h"
 
+
+// Modificado. Agregamos una nueva estructura cola. MLF
 struct queue{
   struct proc *first, *last;
+
 };
 
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
-  struct queue mlf[MLF_LEVELS];
+  struct queue mlf[MLF_LEVELS];  // Modificado. Ptable tiene ahora una cola MLF
+  int size;  // Modificado. para saber el tamanio de ptable
+
 } ptable;
 
 static struct proc *initproc;
@@ -25,7 +30,7 @@ extern void trapret(void);
 
 static void wakeup1(void *chan);
 
-
+// Modificado. Agregamos funcion UP
 int
 up(struct proc *p)
 {
@@ -34,6 +39,7 @@ up(struct proc *p)
   return aux;
 }
 
+// Modificado Agregamos funcion DOWN
 int
 down(struct proc *p)
 {
@@ -42,25 +48,28 @@ down(struct proc *p)
   return aux;
 }
 
+
+// Modificado Agregamos funcion ENCOLAR
 static void
 encolar(struct proc *p,int level)
 {
   if( ptable.mlf[level].first == 0)
   {
-    ptable.mlf[level].last = p;   
-    ptable.mlf[level].first = p;  
+    ptable.mlf[level].last = p;
+    ptable.mlf[level].first = p;
 	p->current_level = level;
 //    cprintf("Primer elemento en ptable.proc del nivel %d   \n",level);
   }
   else
   {
-    ptable.mlf[level].last->next = p; 
-    ptable.mlf[level].last = p;   
+    ptable.mlf[level].last->next = p;
+    ptable.mlf[level].last = p;
 	p->current_level = level;
 //    cprintf("Encole un proceso en ptable.proc de nivel %d   \n",level);
   }
 }
 
+// Modificado Agregamos funcion DESENCOLAR
 static void
 desencolar(struct proc *p)
 {
@@ -77,18 +86,27 @@ desencolar(struct proc *p)
   }
 }
 
-static void 
+// Modificado Agregamos funcion MAKE_RUNNABLE
+static void
 make_runnable(struct proc *p,int level)
 {
   encolar(p,level);
   p->state= RUNNABLE;
 }
 
-static void 
+// Modificado Agregamos funcion MAKE_RUNNING
+static void
 make_running(struct proc *p)
 {
   desencolar(p);
   p->state= RUNNING;
+}
+
+// Modificado Agregamos funcion set_priority
+void
+set_priority(struct proc *p , int param)
+{
+	p->state = param;
 }
 
 void
@@ -107,7 +125,6 @@ allocproc(void)
 {
   struct proc *p;
   char *sp;
-
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if(p->state == UNUSED)
@@ -126,11 +143,11 @@ found:
     return 0;
   }
   sp = p->kstack + KSTACKSIZE;
-  
+
   // Leave room for trap frame.
   sp -= sizeof *p->tf;
   p->tf = (struct trapframe*)sp;
-  
+
   // Set up new context to start executing at forkret,
   // which returns to trapret.
   sp -= 4;
@@ -151,7 +168,7 @@ userinit(void)
 {
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
-  
+
   p = allocproc();
   initproc = p;
   if((p->pgdir = setupkvm(kalloc)) == 0)
@@ -166,12 +183,12 @@ userinit(void)
   p->tf->eflags = FL_IF;
   p->tf->esp = PGSIZE;
   p->tf->eip = 0;  // beginning of initcode.S
-
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
 
-  make_runnable(p,0);
-  //p->state = RUNNABLE;
+  make_runnable(p,0); // Modificado. Insertamos este metodo en lugar de la sentencia p->state = RUNNABLE;
+
+
 }
 
 // Grow current process's memory by n bytes.
@@ -180,7 +197,7 @@ int
 growproc(int n)
 {
   uint sz;
-  
+
   sz = proc->sz;
   if(n > 0){
     if((sz = allocuvm(proc->pgdir, sz, sz + n)) == 0)
@@ -225,10 +242,10 @@ fork(void)
     if(proc->ofile[i])
       np->ofile[i] = filedup(proc->ofile[i]);
   np->cwd = idup(proc->cwd);
- 
   pid = np->pid;
-  make_runnable(np,0);
-  //np->state = RUNNABLE;
+  
+  make_runnable(np,0); // Modificado Insertamos este metodo en lugar de la sentencia np->state = RUNNABLE;
+
   safestrcpy(np->name, proc->name, sizeof(proc->name));
   return pid;
 }
@@ -315,6 +332,7 @@ wait(void)
     }
 
     // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+    cprintf("FORK  2  \n");
     sleep(proc, &ptable.lock);  //DOC: wait-sleep
   }
 }
@@ -330,40 +348,29 @@ wait(void)
 void
 scheduler(void)
 {
- 
+
   struct proc *p;
   int indice;
   for(;;){
-	  indice = 0;  
+	  indice = 0;
       // Enable interrupts on this processor.
       sti();
      // Loop over process table looking for process to run.
       acquire(&ptable.lock);
-      while(indice < MLF_LEVELS)    //  Con esto recorro los niveles de MLF
+      while(indice < MLF_LEVELS)    // Modificado. Con esto recorro los niveles de MLF
       {
-
       if(ptable.mlf[indice].first != 0)
 	   {
-			  p = ptable.mlf[indice].first;	
-              cprintf("edi  %d  \n",p->context->edi);
-              cprintf("esi  %d  \n",p->context->esi);
-              cprintf("ebx  %d  \n",p->context->ebx);
-              cprintf("ebp  %d  \n",p->context->ebp);
-              cprintf("eip  %d  \n",p->context->eip);
-              cprintf("kstack  %s  \n",p->kstack);
-              cprintf("   \n");
-              
-
-                            
-                            
-			  if(p->state != RUNNABLE)
-				panic("This proces is not RUNNABLE");
+			  p = ptable.mlf[indice].first; // Modificado. Trato el primer proceso de la nivel 'indice' de la tabla MLF
+    		  if(p->state != RUNNABLE)
+				panic("This proces is not RUNNABLE");  //Modificado. No puede ser no RUNNABLE el proceso
 			   // Switch to chosen process.  It is the process's job
 			  // to release ptable.lock and then reacquire it
 			  // before jumping back to us.
 			  proc = p;
 			  switchuvm(p);
-    		  make_running(p);   // No hago mas el FOR del xv6 original por que esta funcion ya me esta avanzando cosumiendo el first
+    		  make_running(p);   // Modificado Insertamos este metodo
+    		  								// No hago mas el FOR del xv6 original por que esta funcion ya me esta avanzando cosumiendo el first
 			  p->quantum = 0;
 			  swtch(&cpu->scheduler, proc->context);
 			  switchkvm();
@@ -371,7 +378,7 @@ scheduler(void)
 			  // It should have changed its p->state before coming back.
 	 	     proc = 0;
 		}
-        if(ptable.mlf[indice].first == 0	)  // Me aseguro que recorro todos los proceso de un nivel antes de avanzar 
+        if(ptable.mlf[indice].first == 0	)  // Me aseguro que recorro todos los proceso de un nivel antes de avanzar
         	indice++;
 	   }
 	release(&ptable.lock);
@@ -421,14 +428,15 @@ forkret(void)
   // Still holding ptable.lock from scheduler.
   release(&ptable.lock);
 
+
   if (first) {
     // Some initialization functions must be run in the context
-    // of a regular process (e.g., they call sleep), and thus cannot 
+    // of a regular process (e.g., they call sleep), and thus cannot
     // be run from main().
     first = 0;
     initlog();
   }
-  
+
   // Return to "caller", actually trapret (see allocproc).
 }
 
@@ -437,6 +445,7 @@ forkret(void)
 void
 sleep(void *chan, struct spinlock *lk)
 {
+  cprintf("FORK  3  \n");
   if(proc == 0)
     panic("sleep");
 
@@ -481,9 +490,10 @@ wakeup1(void *chan)
     if(p->state == SLEEPING && p->chan == chan)
     {
 //      cprintf("El proceso %s pasa a RUNNABLE por WAKEUP \n",p->name);
-      make_runnable(p,up(p));//Sube de nivel
+      make_runnable(p,up(p)); //Modificado Insertamos este metodo en lugar de la sentencia de abajo. Sube de nivel
+      //p->state = RUNNABLE;                                              
     }
-      //p->state = RUNNABLE;
+
 }
 
 // Wake up all processes sleeping on chan.
@@ -511,7 +521,7 @@ kill(int pid)
       if(p->state == SLEEPING)
       {
         cprintf("El proceso %s pasa a RUNNABLE por KILL \n",p->name);
-        make_runnable(p,p->current_level);//Queda el nivel q estaba
+        make_runnable(p,p->current_level); //Modificado Insertamos este metodo en lugar de la sentencia de abajo. Queda el nivel q estaba
         //p->state = RUNNABLE;
       }
       release(&ptable.lock);
@@ -541,7 +551,7 @@ procdump(void)
   struct proc *p;
   char *state;
   uint pc[10];
-  
+
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->state == UNUSED)
       continue;
