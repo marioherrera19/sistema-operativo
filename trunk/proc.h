@@ -67,9 +67,9 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
-  int quantum; 				   // Quantum lleva la cantidad de ticks corriendo
-  struct proc *next;           // Apunta al siguiente proceso del mismo nivel. 
-  int current_level;           // Indica el nivel corriente del proceso.
+  int quantum; 				   // Modificado. Quantum lleva la cantidad de ticks corriendo
+  struct proc *next;           // Modificado. Apunta al siguiente proceso del mismo nivel. 
+  int current_level;           // Modificado. Indica el nivel corriente del proceso.
 };
 
 // Process memory is laid out contiguously, low addresses first:
@@ -77,3 +77,8 @@ struct proc {
 //   original data and bss
 //   fixed-size stack
 //   expandable heap
+
+
+// Modificado Agregamos funcion set_priority para poder llamarla en sysproc.c
+//void set_priority(struct proc *p , int param);
+

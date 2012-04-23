@@ -671,12 +671,16 @@ SYSCALL(uptime)
  413:	c3                   	ret    
 
 00000414 <procstat>:
+
+# Modificado declaramos una nueva llamada al sistema
 SYSCALL(procstat)
  414:	b8 0f 00 00 00       	mov    $0xf,%eax
  419:	cd 40                	int    $0x40
  41b:	c3                   	ret    
 
 0000041c <set_priority>:
+
+# Modificado declaramos una nueva llamada al sistema
 SYSCALL(set_priority)
  41c:	b8 10 00 00 00       	mov    $0x10,%eax
  421:	cd 40                	int    $0x40

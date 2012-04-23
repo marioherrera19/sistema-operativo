@@ -29,7 +29,6 @@ int
 sys_kill(void)
 {
   int pid;
-
   if(argint(0, &pid) < 0)
     return -1;
   return kill(pid);
@@ -44,6 +43,7 @@ sys_getpid(void)
 int
 sys_sbrk(void)
 {
+
   int addr;
   int n;
 
@@ -58,9 +58,9 @@ sys_sbrk(void)
 int
 sys_sleep(void)
 {
+  cprintf("PEPE  \n");
   int n;
   uint ticks0;
-  
   if(argint(0, &n) < 0)
     return -1;
   acquire(&tickslock);
@@ -70,6 +70,7 @@ sys_sleep(void)
       release(&tickslock);
       return -1;
     }
+    cprintf("FORK  1  \n");
     sleep(&ticks, &tickslock);
   }
   release(&tickslock);
@@ -88,6 +89,8 @@ sys_uptime(void)
   return xticks;
 }
 
+
+//Modificado agregamos una nueva llamada al sistema
 int
 sys_procstat(void)
 {
@@ -95,14 +98,17 @@ sys_procstat(void)
 	return(0);
 }
 
+//Modificado agregamos una nueva llamada al sistema
 int 
 sys_set_priority(void)
 {
-	int p;
+
+	int param;
 	// argstr o algo asi para recuperar String
-	if(argint(0,&p) < 0)
+	if(argint(0,&param) < 0)
 		return(-1);	
-	cprintf("El parametro de set priority es:    %d     # \n",p);
+	set_priority(proc,param);		
+	cprintf("El parametro de set priority es:    %d     # \n",param);
 	return (0);
 }
 

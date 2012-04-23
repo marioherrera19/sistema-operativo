@@ -148,6 +148,7 @@ _forktest: user/forktest.o $(ULIB)
 mkfs: mkfs.c fs.h
 	gcc -m32 -Werror -Wall -o mkfs mkfs.c
 
+# Modificado. Agregamos _ps para llamar a ps desde la consola
 UPROGS=\
 	_cat\
 	_echo\
