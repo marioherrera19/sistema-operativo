@@ -58,7 +58,7 @@ sys_sbrk(void)
 int
 sys_sleep(void)
 {
-cprintf("PEPE  \n");
+  cprintf("PEPE  \n");
   int n;
   uint ticks0;
   if(argint(0, &n) < 0)
@@ -102,7 +102,6 @@ sys_procstat(void)
 int 
 sys_set_priority(void)
 {
-
 	int param;
 	// argstr o algo asi para recuperar String
 	if(argint(0,&param) < 0)

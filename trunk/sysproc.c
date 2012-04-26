@@ -102,13 +102,12 @@ sys_procstat(void)
 int 
 sys_set_priority(void)
 {
-
 	int param;
 	// argstr o algo asi para recuperar String
 	if(argint(0,&param) < 0)
 		return(-1);	
 	set_priority(proc,param);		
-	cprintf("El parametro de set priority es:    %d     # \n",param);
+//	cprintf("El parametro de set priority es:    %d     # \n",param);
 	return (0);
 }
 

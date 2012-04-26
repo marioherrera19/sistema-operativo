@@ -18,6 +18,12 @@ forktest(void)
 {
   int n, pid;
 
+  for(n=0; n<10000000; n++)
+  {
+  
+  }
+
+
   printf(1, "fork test\n");
 
   for(n=0; n<N; n++){
