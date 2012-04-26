@@ -3,7 +3,8 @@
 #include "user.h"
 
 int main(){
-       procstat();
+       set_priority(3);
+	   procstat();
        exit();
 }
 
